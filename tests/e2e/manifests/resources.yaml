@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: e2e-creds
+type: Opaque
+stringData:
+  # A literal `$` must reach the upstream unchanged.
+  upstream: "sk-e2e-$dollar"
+  caller: "caller-e2e-key"
+---
+apiVersion: aisix.api7.ai/v1alpha1
+kind: ProviderKey
+metadata:
+  name: mock
+spec:
+  provider: openai
+  adapter: openai
+  api_base: http://mock-openai:8080/v1
+  api_key_secret_ref:
+    name: e2e-creds
+    key: upstream
+---
+apiVersion: aisix.api7.ai/v1alpha1
+kind: Model
+metadata:
+  name: chat
+spec:
+  # Not a valid Kubernetes name, so it has to come from display_name.
+  display_name: e2e/chat
+  provider: openai
+  model_name: upstream-a
+  provider_key_ref:
+    name: mock
+---
+apiVersion: aisix.api7.ai/v1alpha1
+kind: APIKey
+metadata:
+  name: caller
+spec:
+  allowed_models: ["*"]
+  key_secret_ref:
+    name: e2e-creds
+    key: caller

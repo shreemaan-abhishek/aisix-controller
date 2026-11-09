@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aisix-controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: aisix-controller
+rules:
+  - apiGroups: ["aisix.api7.ai"]
+    resources: ["providerkeys", "models", "apikeys"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["aisix.api7.ai"]
+    resources: ["providerkeys/status", "models/status", "apikeys/status"]
+    verbs: ["get", "patch", "update"]
+  # Reads the Secrets that resources reference; writes the resources Secret.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "patch", "update"]
+  # Stamps the resources hash on the gateway pod template to roll it out.
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: aisix-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: aisix-controller
+subjects:
+  - kind: ServiceAccount
+    name: aisix-controller
